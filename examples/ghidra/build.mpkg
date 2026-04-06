@@ -1,0 +1,25 @@
+# Basic metadata
+name Ghidra
+description Advanced Open-Source SRE
+bin ghidra_wrapper.sh
+
+# Dynamic (autoupdate)
+setsh VERSION, fetch_version.sh
+setsh ZIP_NAME, fetch_zip.sh
+
+# Dependencies
+dep java_openjdk26
+
+# Version
+version %VERSION
+
+# Source stuff
+archive_type zip
+src https://github.com/NationalSecurityAgency/ghidra/releases/download/%VERSION/%ZIP_NAME
+
+archive_type other
+srcl ghidra_wrapper.sh
+
+# Build
+build build.sh
+

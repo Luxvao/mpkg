@@ -1,0 +1,13 @@
+# Basic metadata
+name Ghidra Desktop File
+description Provides a desktop file to launch ghidra
+version 1.0
+
+# Dependencies
+dep ghidra
+
+# Build
+build build.sh
+
+# Cleanup
+uninstall uninstall.sh
