@@ -49,7 +49,7 @@ Packages must at minimum provide a:
 
 ## What about auto-updates?
 Mpkg by design refuses to provide a centralised repository. It to me is not useful, nor is it something I wish to maintain. Therefore I've thought of the `setsh` system. Mpkg supports
-2 types of variables. We have static variables (`set VARIABLE, whatever`) which are evaluated once and (as the name implies) static. Then there are dynamic variables. These are the core of
+2 types of variables. We have static variables (`set VARIABLE, whatever`) which are evaluated once and are (as the name implies) static. Then there are dynamic variables. These are the core of
 the auto-update system. For a dynamic variable, you will need a shell script. Technically that's a lie. You simply need an executable file that will give some output. That output is the contents
 of the dynamic variable. To illustrate: `setsh VARIABLE, fetch_version.sh` will create a new dynamic variable named `VARIABLE`. It will eagerly evaluate `fetch_version.sh` (relative to the package directory)
 and store its output for future reference. When checking for updates, it will compare the previous output of the script to the new one. If there is a difference, then the package by convention has an update
