@@ -16,11 +16,11 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    #[command(about = "Builds a package")]
+    #[command(about = "Build or update a package")]
     Build { package: String },
-    #[command(about = "Checks for updates")]
+    #[command(about = "Check for updates")]
     Check,
-    #[command(about = "Lists packages")]
+    #[command(about = "List packages")]
     List,
     #[command(about = "Launch a package")]
     Launch { package: String },

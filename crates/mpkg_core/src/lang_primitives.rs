@@ -1,6 +1,5 @@
 use std::{collections::HashMap, path::PathBuf};
 
-use archive::ArchiveFormat;
 use fs_extra::dir::CopyOptions;
 use serde::{Deserialize, Serialize};
 
@@ -158,10 +157,6 @@ impl Command {
             Command::Version(ver) => ctx.version = Some(substitute(ver.clone(), &ctx_variables)?),
             Command::ArchiveType(at) => ctx.archive_type = Some(at.clone()),
             Command::Src(src) => {
-                if let None = ctx.archive_type {
-                    return Err(Error::ArchiveTypeNotSet);
-                }
-
                 let src_substituted = substitute(src.clone(), &ctx_variables)?;
 
                 if !headless {
@@ -175,30 +170,26 @@ impl Command {
                 let bytes =
                     rt.block_on(async { download_with_progress(&src_substituted).await })?;
 
-                let archive_type = match ctx.archive_type {
-                    Some(ArchiveType::Zip) => ArchiveFormat::Zip,
-                    Some(ArchiveType::Tar) => ArchiveFormat::Tar,
-                    Some(ArchiveType::Other) => {
-                        // We just save it as $BUILD_DIR/downloaded
-                        let mut target_path = package_context.build_dir.clone();
-                        target_path.push("downloaded");
+                if let Some(ArchiveType::Other) = ctx.archive_type {
+                    // We just save it as $BUILD_DIR/downloaded
+                    let mut target_path = package_context.build_dir.clone();
+                    target_path.push("downloaded");
 
-                        std::fs::write(target_path, &bytes)?;
+                    std::fs::write(target_path, &bytes)?;
 
-                        return Ok(());
-                    }
-                    None => unreachable!(),
-                };
-
-                ctx.archive_type = None;
-
-                extract_archive(&bytes, archive_type, &package_context.build_dir, headless)?;
-            }
-            Command::Srcl(srcl) => {
-                if let None = ctx.archive_type {
-                    return Err(Error::ArchiveTypeNotSet);
+                    return Ok(());
                 }
 
+                extract_archive(
+                    &bytes,
+                    ctx.archive_type.ok_or(Error::ArchiveTypeNotSet)?,
+                    &package_context.build_dir,
+                    headless,
+                )?;
+
+                ctx.archive_type = None;
+            }
+            Command::Srcl(srcl) => {
                 // Substitute before continuing
                 let mut src = package_context.package_dir.clone();
                 src.push(substitute(srcl.clone(), &ctx_variables)?);
@@ -222,15 +213,6 @@ impl Command {
                 let mut target = package_context.build_dir.clone();
                 target.push(name);
 
-                let archive_type = match ctx.archive_type {
-                    Some(ArchiveType::Zip) => ArchiveFormat::Zip,
-                    Some(ArchiveType::Tar) => ArchiveFormat::Tar,
-                    Some(ArchiveType::Other) => return Ok(()),
-                    None => unreachable!(),
-                };
-
-                ctx.archive_type = None;
-
                 if !target.is_file() {
                     return Err(Error::TargetNotFile(command_no));
                 }
@@ -239,10 +221,12 @@ impl Command {
 
                 extract_archive(
                     &file_contents,
-                    archive_type,
+                    ctx.archive_type.ok_or(Error::ArchiveTypeNotSet)?,
                     &package_context.build_dir,
                     headless,
                 )?;
+
+                ctx.archive_type = None;
             }
             Command::Dep(dep) => {
                 let dep = substitute(dep.clone(), &ctx_variables)?;

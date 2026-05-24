@@ -124,15 +124,11 @@ pub fn build_package(package: &str) -> Result<(), Error> {
     let mut package_spec_path = package_dir.clone();
     package_spec_path.push("build.mpkg");
 
-    // Check if build/install files already exist, if they do, remove them
-    let runtime_dirs = get_package_dirs(package)?;
-
-    if runtime_dirs.0.exists() {
-        std::fs::remove_dir_all(runtime_dirs.0)?;
-    }
-
-    if runtime_dirs.1.exists() {
-        std::fs::remove_dir_all(runtime_dirs.1)?;
+    // Uninstall/cleanup if necessary
+    match uninstall_package(package) {
+        Ok(()) => (),
+        Err(Error::PackageNotInstalled(_)) => (),
+        e => return e,
     }
 
     // Create build/install directories

@@ -1,18 +1,16 @@
-use std::{
-    path::{Path, PathBuf},
-    time::Duration,
-};
+use std::{io::Cursor, path::Path, time::Duration};
 
-use archive::{ArchiveExtractor, ArchiveFormat};
 use futures_util::StreamExt;
 use indicatif::ProgressBar;
 use reqwest::Client;
+use tar::Archive;
+use zip::ZipArchive;
 
-use crate::error::Error;
+use crate::{error::Error, lang_primitives::ArchiveType};
 
 pub fn extract_archive(
     data: &[u8],
-    archive_format: ArchiveFormat,
+    archive_type: ArchiveType,
     build_dir: &Path,
     headless: bool,
 ) -> Result<(), Error> {
@@ -20,28 +18,20 @@ pub fn extract_archive(
         println!("Extracting...");
     }
 
-    let extractor = ArchiveExtractor::new();
+    match archive_type {
+        ArchiveType::Zip => {
+            let data = Cursor::new(data);
 
-    let files = extractor.extract(data, archive_format)?;
+            let mut zip_archive = ZipArchive::new(data)?;
 
-    for file in files {
-        let mut fixed_path = PathBuf::from(build_dir);
-        fixed_path.push(format!("./{}", &file.path));
-
-        if !headless {
-            println!("Inflating `{}`", file.path);
+            zip_archive.extract(build_dir)?;
         }
+        ArchiveType::Tar => {
+            let mut tar_archive = Archive::new(data);
 
-        if file.is_directory {
-            std::fs::create_dir_all(&fixed_path)?;
-            continue;
+            tar_archive.unpack(build_dir)?;
         }
-
-        if let Some(parent) = fixed_path.parent() {
-            std::fs::create_dir_all(parent)?;
-        }
-
-        std::fs::write(fixed_path, file.data)?;
+        _ => (),
     }
 
     Ok(())

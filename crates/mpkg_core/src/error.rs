@@ -55,8 +55,6 @@ pub enum Error {
     #[error("Archive type may only be used with file `srcl`. Command {0}")]
     TargetNotFile(u64),
     #[error("{0}")]
-    ArchiveError(#[from] archive::ArchiveError),
-    #[error("{0}")]
     ReqwestError(#[from] reqwest::Error),
     #[error("{0}")]
     VarError(#[from] std::env::VarError),
@@ -68,4 +66,6 @@ pub enum Error {
     TomlSerError(#[from] toml::ser::Error),
     #[error("Failed to convert an OS string into a normal string")]
     OsStrToStrConversionError,
+    #[error("{0}")]
+    ZipError(#[from] zip::result::ZipError),
 }
